@@ -295,10 +295,13 @@ void b3PluginManager::tickPlugins(double timeStep, bool isPreTick)
 void b3PluginManager::reportNotifications()
 {
 	b3AlignedObjectArray<b3Notification> &notifications = m_data->m_notifications[m_data->m_activeNotificationsBufferIndex];
-	if (notifications.size() == 0)
-	{
-		return;
-	}
+	// We explicitly want to also call processNotifications when there are no
+	// notifications available. This is also for plugins, for example for the
+	// following use-case:
+	// A Plugin receiving an onPostTick call followed by a processNotifications
+	// call with an empty notifications list will know that no objects have
+	// moved during the simulation step. Without the processNotifications call,
+	// there is no way of knowing this, except by polling the state.
 
 	// Swap notification buffers.
 	m_data->m_activeNotificationsBufferIndex = 1 - m_data->m_activeNotificationsBufferIndex;
