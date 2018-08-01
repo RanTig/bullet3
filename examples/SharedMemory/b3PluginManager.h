@@ -18,6 +18,7 @@ class b3PluginManager
 		void addEvents(const struct b3VRControllerEvent* vrControllerEvents, int numVRControllerEvents, const struct b3KeyboardEvent* keyEvents, int numKeyEvents, const struct b3MouseEvent* mouseEvents, int numMouseEvents);
 		void clearEvents();
 
+		bool hasNotificationListenerPlugins() const;
 		void addNotification(const struct b3Notification& notification);
 		void reportNotifications();
 

@@ -88,9 +88,10 @@ struct b3PluginManagerInternalData
 	b3AlignedObjectArray<b3Notification> m_notifications[2];
 	int m_activeNotificationsBufferIndex;
 	int m_activeRendererPluginUid;
+	int m_numNotificationListenerPlugins;
 
 	b3PluginManagerInternalData()
-		:m_activeNotificationsBufferIndex(0), m_activeRendererPluginUid(-1)
+		:m_activeNotificationsBufferIndex(0), m_activeRendererPluginUid(-1), m_numNotificationListenerPlugins(0)
 	{
 	}
 };
@@ -146,6 +147,10 @@ void b3PluginManager::clearEvents()
 
 void b3PluginManager::addNotification(const struct b3Notification& notification)
 {
+	if (!hasNotificationListenerPlugins())
+	{
+		return;
+	}
 	m_data->m_notifications[m_data->m_activeNotificationsBufferIndex].push_back(notification);
 }
 
@@ -184,6 +189,11 @@ int b3PluginManager::loadPlugin(const char* pluginPath, const char* postFixStr)
 			plugin->m_postTickFunc = (PFN_TICK)B3_DYNLIB_IMPORT(pluginHandle, postTickPluginCallback.c_str());
 			plugin->m_processNotificationsFunc = (PFN_TICK)B3_DYNLIB_IMPORT(pluginHandle, processNotificationsStr.c_str());
 			plugin->m_getRendererFunc =  (PFN_GET_RENDER_INTERFACE)B3_DYNLIB_IMPORT(pluginHandle, getRendererStr.c_str());
+
+			if (plugin->m_processNotificationsFunc)
+			{
+				m_data->m_numNotificationListenerPlugins++;
+			}
 			
 			if (plugin->m_initFunc && plugin->m_exitFunc && plugin->m_executeCommandFunc)
 			{
@@ -251,6 +261,10 @@ void b3PluginManager::unloadPlugin(int pluginUniqueId)
 		context.m_userPointer = plugin->m_userPointer;
 		context.m_physClient = (b3PhysicsClientHandle) m_data->m_physicsDirect;
 
+		if (plugin->m_processNotificationsFunc) {
+			m_data->m_numNotificationListenerPlugins--;
+		}
+
 		plugin->m_exitFunc(&context);
 		m_data->m_pluginMap.remove(plugin->m_pluginPath.c_str());
 		m_data->m_plugins.freeHandle(pluginUniqueId);
@@ -303,6 +317,11 @@ void b3PluginManager::reportNotifications()
 	// moved during the simulation step. Without the processNotifications call,
 	// there is no way of knowing this, except by polling the state.
 
+	if (!hasNotificationListenerPlugins())
+	{
+		notifications.clear();
+		return;
+	}
 	// Swap notification buffers.
 	m_data->m_activeNotificationsBufferIndex = 1 - m_data->m_activeNotificationsBufferIndex;
 
@@ -409,3 +428,7 @@ UrdfRenderingInterface* b3PluginManager::getRenderInterface()
 	return renderer;
 }
 
+bool b3PluginManager::hasNotificationListenerPlugins() const
+{
+	return m_data->m_numNotificationListenerPlugins > 0;
+}

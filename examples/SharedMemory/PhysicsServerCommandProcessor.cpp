@@ -2860,10 +2860,13 @@ bool PhysicsServerCommandProcessor::processImportedObjects(const char* fileName,
             }
         }
 
-        b3Notification notification;
-        notification.m_notificationType = BODY_ADDED;
-        notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
-        m_data->m_pluginManager.addNotification(notification);
+		if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+		{
+			b3Notification notification;
+			notification.m_notificationType = BODY_ADDED;
+			notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
+			m_data->m_pluginManager.addNotification(notification);
+		}
     }
 
 	
@@ -5119,11 +5122,13 @@ bool PhysicsServerCommandProcessor::processAddUserDataCommand(const struct Share
 	serverStatusOut.m_userDataResponseArgs.m_valueType = clientCmd.m_addUserDataRequestArgs.m_valueType;
 	strcpy(serverStatusOut.m_userDataResponseArgs.m_key, clientCmd.m_addUserDataRequestArgs.m_key);
 
-	b3Notification notification;
-	notification.m_notificationType = USER_DATA_ADDED;
-	notification.m_userDataArgs.m_userDataId = userDataHandle;
-	m_data->m_pluginManager.addNotification(notification);
-
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = USER_DATA_ADDED;
+		notification.m_userDataArgs.m_userDataId = userDataHandle;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 	// Keep bufferServerToClient as-is.
 	return hasStatus;
 }
@@ -5151,11 +5156,13 @@ bool PhysicsServerCommandProcessor::processRemoveUserDataCommand(const struct Sh
 	serverStatusOut.m_removeUserDataResponseArgs = clientCmd.m_removeUserDataRequestArgs;
 	serverStatusOut.m_type = CMD_REMOVE_USER_DATA_COMPLETED;
 
-	b3Notification notification;
-	notification.m_notificationType = USER_DATA_REMOVED;
-	notification.m_userDataArgs.m_userDataId = clientCmd.m_removeUserDataRequestArgs.m_userDataId;
-	m_data->m_pluginManager.addNotification(notification);
-
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = USER_DATA_REMOVED;
+		notification.m_userDataArgs.m_userDataId = clientCmd.m_removeUserDataRequestArgs.m_userDataId;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 	return hasStatus;
 }
 
@@ -6504,10 +6511,13 @@ bool PhysicsServerCommandProcessor::processLoadSoftBodyCommand(const struct Shar
 				serverStatusOut.m_loadSoftBodyResultArguments.m_objectUniqueId = bodyUniqueId;
 				serverStatusOut.m_type = CMD_LOAD_SOFT_BODY_COMPLETED;
 
-				b3Notification notification;
-				notification.m_notificationType = BODY_ADDED;
-				notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
-				m_data->m_pluginManager.addNotification(notification);
+				if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+				{
+					b3Notification notification;
+					notification.m_notificationType = BODY_ADDED;
+					notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
+					m_data->m_pluginManager.addNotification(notification);
+				}
 			}
 		}
 	}
@@ -7085,11 +7095,14 @@ bool PhysicsServerCommandProcessor::processChangeDynamicsInfoCommand(const struc
 	SharedMemoryStatus& serverCmd =serverStatusOut;
 	serverCmd.m_type = CMD_CLIENT_COMMAND_COMPLETED;
 
-	b3Notification notification;
-	notification.m_notificationType = LINK_DYNAMICS_CHANGED;
-	notification.m_linkArgs.m_bodyUniqueId = bodyUniqueId;
-	notification.m_linkArgs.m_linkIndex = linkIndex;
-	m_data->m_pluginManager.addNotification(notification);
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = LINK_DYNAMICS_CHANGED;
+		notification.m_linkArgs.m_bodyUniqueId = bodyUniqueId;
+		notification.m_linkArgs.m_linkIndex = linkIndex;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 
 	return hasStatus;					
 }
@@ -7700,11 +7713,13 @@ bool PhysicsServerCommandProcessor::processCreateRigidBodyCommand(const struct S
 	bodyHandle->m_rootLocalInertialFrame.setIdentity();
 	bodyHandle->m_rigidBody = rb;
 
-	b3Notification notification;
-	notification.m_notificationType = BODY_ADDED;
-	notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
-	m_data->m_pluginManager.addNotification(notification);
-	
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = BODY_ADDED;
+		notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 	return hasStatus;
 }
 
@@ -8305,12 +8320,15 @@ bool PhysicsServerCommandProcessor::processRemoveBodyCommand(const struct Shared
 	}
 	m_data->m_guiHelper->setVisualizerFlag(COV_ENABLE_SYNC_RENDERING_INTERNAL,1);
 
-	for (int i=0;i<serverCmd.m_removeObjectArgs.m_numBodies;i++)
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
 	{
-		b3Notification notification;
-		notification.m_notificationType = BODY_REMOVED;
-		notification.m_bodyArgs.m_bodyUniqueId = serverCmd.m_removeObjectArgs.m_bodyUniqueIds[i];
-		m_data->m_pluginManager.addNotification(notification);
+		for (int i=0;i<serverCmd.m_removeObjectArgs.m_numBodies;i++)
+		{
+			b3Notification notification;
+			notification.m_notificationType = BODY_REMOVED;
+			notification.m_bodyArgs.m_bodyUniqueId = serverCmd.m_removeObjectArgs.m_bodyUniqueIds[i];
+			m_data->m_pluginManager.addNotification(notification);
+		}
 	}
 	
     return hasStatus;
@@ -9474,13 +9492,16 @@ bool PhysicsServerCommandProcessor::processUpdateVisualShapeCommand(const struct
 	}
 	
 	serverCmd.m_type = CMD_VISUAL_SHAPE_UPDATE_COMPLETED;
-
-	b3Notification notification;
-	notification.m_notificationType = VISUAL_SHAPE_CHANGED;
-	notification.m_visualShapeArgs.m_bodyUniqueId = clientCmd.m_updateVisualShapeDataArguments.m_bodyUniqueId;
-	notification.m_visualShapeArgs.m_linkIndex = clientCmd.m_updateVisualShapeDataArguments.m_jointIndex;
-	notification.m_visualShapeArgs.m_visualShapeIndex = clientCmd.m_updateVisualShapeDataArguments.m_shapeIndex;
-	m_data->m_pluginManager.addNotification(notification);
+	
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = VISUAL_SHAPE_CHANGED;
+		notification.m_visualShapeArgs.m_bodyUniqueId = clientCmd.m_updateVisualShapeDataArguments.m_bodyUniqueId;
+		notification.m_visualShapeArgs.m_linkIndex = clientCmd.m_updateVisualShapeDataArguments.m_jointIndex;
+		notification.m_visualShapeArgs.m_visualShapeIndex = clientCmd.m_updateVisualShapeDataArguments.m_shapeIndex;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 
 	return hasStatus;
 }
@@ -9703,11 +9724,13 @@ bool PhysicsServerCommandProcessor::processLoadBulletCommand(const struct Shared
 							serverStatusOut.m_sdfLoadedArgs.m_numBodies++;
 							serverStatusOut.m_sdfLoadedArgs.m_bodyUniqueIds[i] = bodyUniqueId;
 						}
-
-						b3Notification notification;
-						notification.m_notificationType = BODY_ADDED;
-						notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
-						m_data->m_pluginManager.addNotification(notification);
+						if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+						{
+							b3Notification notification;
+							notification.m_notificationType = BODY_ADDED;
+							notification.m_bodyArgs.m_bodyUniqueId = bodyUniqueId;
+							m_data->m_pluginManager.addNotification(notification);
+						}
 					}
 				}
 			}
@@ -10539,6 +10562,10 @@ b3Notification createTransformChangedNotification(int bodyUniqueId, int linkInde
 
 void PhysicsServerCommandProcessor::addTransformChangedNotifications()
 {
+	if (!m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		return;
+	}
 	b3AlignedObjectArray<int> usedHandles;
 	m_data->m_bodyHandles.getUsedHandles(usedHandles);
 	for (int i=0;i<usedHandles.size();i++) {
@@ -10607,9 +10634,12 @@ void PhysicsServerCommandProcessor::resetSimulation()
 	m_data->m_userDataHandles.initHandles();
 	m_data->m_userDataHandleLookup.clear();
 
-	b3Notification notification;
-	notification.m_notificationType = SIMULATION_RESET;
-	m_data->m_pluginManager.addNotification(notification);
+	if (m_data->m_pluginManager.hasNotificationListenerPlugins())
+	{
+		b3Notification notification;
+		notification.m_notificationType = SIMULATION_RESET;
+		m_data->m_pluginManager.addNotification(notification);
+	}
 }
 
 
