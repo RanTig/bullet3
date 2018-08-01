@@ -310,7 +310,7 @@ void b3PluginManager::reportNotifications()
 {
 	b3AlignedObjectArray<b3Notification> &notifications = m_data->m_notifications[m_data->m_activeNotificationsBufferIndex];
 	// We explicitly want to also call processNotifications when there are no
-	// notifications available. This is also for plugins, for example for the
+	// notifications available. This is useful for plugins, for example for the
 	// following use-case:
 	// A Plugin receiving an onPostTick call followed by a processNotifications
 	// call with an empty notifications list will know that no objects have
